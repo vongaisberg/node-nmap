@@ -183,7 +183,7 @@ class NmapScan extends EventEmitter {
       if (
         err.Error.toString() != "Cannot find nmap-payloads. UDP payloads are disabled."
       ) {
-        this.killChild();
+        //this.killChild();
         if (err.code === "ENOENT") {
           this.emit(
             "error",
@@ -196,7 +196,6 @@ class NmapScan extends EventEmitter {
     });
 
     this.child.stderr.on("data", (err) => {
-      console.log(`child.stderr.on(data): ${err}`);
       this.error = err.toString();
     });
 
