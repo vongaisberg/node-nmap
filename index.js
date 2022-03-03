@@ -208,8 +208,8 @@ class NmapScan extends EventEmitter {
         this.stopTimer();
         this.emit("error", "Over scan timeout " + this.scanTimeout);
       } else {
-        this.rawDataHandler(this.rawData);
       }
+      this.rawDataHandler(this.rawData);
     });
   }
 
