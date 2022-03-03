@@ -180,18 +180,15 @@ class NmapScan extends EventEmitter {
 
     this.child.on("error", (err) => {
       console.log(`child.on(error): ${err}`);
-      if (
-        err.Error.toString() != "Cannot find nmap-payloads. UDP payloads are disabled."
-      ) {
-        //this.killChild();
-        if (err.code === "ENOENT") {
-          this.emit(
-            "error",
-            "NMAP not found at command location: " + nmap.nmapLocation
-          );
-        } else {
-          this.emit("error", err.Error);
-        }
+
+      //this.killChild();
+      if (err.code === "ENOENT") {
+        this.emit(
+          "error",
+          "NMAP not found at command location: " + nmap.nmapLocation
+        );
+      } else {
+        this.emit("error", err.Error);
       }
     });
 
