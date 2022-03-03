@@ -182,7 +182,14 @@ class NmapScan extends EventEmitter {
       this.emit("error", "child.on(error)");
 
       //this.killChild();
-      
+      if (err.code === "ENOENT") {
+        this.emit(
+          "error",
+          "NMAP not found at command location: " + nmap.nmapLocation
+        );
+      } else {
+        this.emit("error", err.Error);
+      }
     });
 
     this.child.stderr.on("data", (err) => {
@@ -197,6 +204,7 @@ class NmapScan extends EventEmitter {
       if (this.error) {
         this.stopTimer();
         this.emit("error", "child.on(close)");
+        this.emit("error", this.error);
       } else if (this.cancelled === true) {
         this.stopTimer();
         this.emit("error", "Over scan timeout " + this.scanTimeout);
