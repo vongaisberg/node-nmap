@@ -179,7 +179,7 @@ class NmapScan extends EventEmitter {
     });
 
     this.child.on("error", (err) => {
-      console.log(`child.on(error): ${err}`);
+      this.emit("error", "child.on(error)");
 
       //this.killChild();
       if (err.code === "ENOENT") {
@@ -203,6 +203,7 @@ class NmapScan extends EventEmitter {
 
       if (this.error) {
         this.stopTimer();
+        this.emit("error", "child.on(close)");
         this.emit("error", this.error);
       } else if (this.cancelled === true) {
         this.stopTimer();
