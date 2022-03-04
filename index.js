@@ -179,7 +179,7 @@ class NmapScan extends EventEmitter {
     });
 
     this.child.on('error', (err) => {
-      //this.killChild();
+      this.killChild();
       if (err.code === 'ENOENT') {
         this.emit('error', 'NMAP not found at command location: ' + nmap.nmapLocation)
       } else {
