@@ -31,7 +31,7 @@ function convertRawJsonToScanResults(xmlInput) {
   xmlInput = xmlInput.nmaprun.host;
 
   tempHostList = xmlInput.map((host) => {
-    console.log(JSON.stringify(host))
+
     const newHost = {
       hostname: null,
       ip: null,
@@ -73,6 +73,7 @@ function convertRawJsonToScanResults(xmlInput) {
 
       newHost.openPorts = openPorts.map((portItem) => {
         // console.log(JSON.stringify(portItem, null, 4))
+        console.log(JSON.stringify(portItem))
 
         const port = parseInt(portItem.$.portid);
         const protocol = portItem.$.protocol;
