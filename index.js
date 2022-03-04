@@ -16,9 +16,9 @@ const xml2js = require('xml2js');
 
 
 /**
- *
- * @param {*} xmlInput
- * @param {*} onFailure
+ * 
+ * @param {*} xmlInput 
+ * @param {*} onFailure 
  * @returns {host[]} - Array of hosts
  */
 function convertRawJsonToScanResults(xmlInput) {
@@ -72,24 +72,18 @@ function convertRawJsonToScanResults(xmlInput) {
 
         const port = parseInt(portItem.$.portid)
         const protocol = portItem.$.protocol
-
-        if (portItem.service) {
-          const service = portItem.service[0].$.name
-          const tunnel = portItem.service[0].$.tunnel
-          const method = portItem.service[0].$.method
-          const product = portItem.service[0].$.tunnel
-        }
+        const service = portItem.service[0].$.name
+        const tunnel = portItem.service[0].$.tunnel
+        const method = portItem.service[0].$.method
+        const product = portItem.service[0].$.tunnel
 
         let portObject = {}
         if(port) portObject.port = port
         if(protocol) portObject.protocol = protocol
-
-        if (portItem.service) {
-          if(service) portObject.service = service
-          if(tunnel) portObject.tunnel = tunnel
-          if(method) portObject.method = method
-          if(product) portObject.product = product
-        }
+        if(service) portObject.service = service
+        if(tunnel) portObject.tunnel = tunnel
+        if(method) portObject.method = method
+        if(product) portObject.product = product
 
         return portObject
       })
@@ -179,7 +173,7 @@ class NmapScan extends EventEmitter {
     });
 
     this.child.on('error', (err) => {
-      this.killChild();
+      //this.killChild();
       if (err.code === 'ENOENT') {
         this.emit('error', 'NMAP not found at command location: ' + nmap.nmapLocation)
       } else {
@@ -197,10 +191,8 @@ class NmapScan extends EventEmitter {
       process.removeListener('exit', this.killChild);
 
       if (this.error) {
-        this.stopTimer();
         this.emit('error', this.error);
       } else if (this.cancelled === true) {
-        this.stopTimer();
         this.emit('error', "Over scan timeout " + this.scanTimeout);
       } else {
         this.rawDataHandler(this.rawData);
@@ -228,7 +220,6 @@ class NmapScan extends EventEmitter {
     //turn NMAP's xml output into a json object
     xml2js.parseString(data, (err, result) => {
       if (err) {
-        this.stopTimer();
         this.emit('error', "Error converting XML to JSON in xml2js: " + err);
       } else {
         this.rawJSON = result;
