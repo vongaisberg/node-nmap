@@ -4,15 +4,16 @@
  * Purpose: Create an interface for NodeJS applications to make use of NMAP installed on the local system.
  */
 
-const child_process = require("child_process");
+const child_process = require('child_process');
 const execSync = child_process.execSync;
 const exec = child_process.exec;
 const spawn = child_process.spawn;
-const fs = require("fs");
-const EventEmitter = require("events").EventEmitter;
-const os = require("os");
-const Queue = require("queued-up");
-const xml2js = require("xml2js");
+const fs = require('fs');
+const EventEmitter = require('events').EventEmitter;
+const os = require('os');
+const Queue = require('queued-up');
+const xml2js = require('xml2js');
+
 
 /**
  *
@@ -26,89 +27,83 @@ function convertRawJsonToScanResults(xmlInput) {
   if (!xmlInput.nmaprun.host) {
     //onFailure("There was a problem with the supplied NMAP XML");
     return tempHostList;
-  }
+  };
 
   xmlInput = xmlInput.nmaprun.host;
 
   tempHostList = xmlInput.map((host) => {
-
     const newHost = {
       hostname: null,
       ip: null,
       mac: null,
       openPorts: null,
-      osNmap: null,
-    };
+      osNmap: null
+    }
 
     //Get hostname
-    if (
-      host.hostnames &&
-      host.hostnames[0] !== "\r\n" &&
-      host.hostnames[0] !== "\n"
-    ) {
-      newHost.hostname = host.hostnames[0].hostname[0].$.name;
+    if (host.hostnames && host.hostnames[0] !== "\r\n" && host.hostnames[0] !== "\n") {
+      newHost.hostname = host.hostnames[0].hostname[0].$.name
     }
 
     //get addresses
     host.address.forEach((address) => {
-      const addressType = address.$.addrtype;
-      const addressAdress = address.$.addr;
-      const addressVendor = address.$.vendor;
+      const addressType = address.$.addrtype
+      const addressAdress = address.$.addr
+      const addressVendor = address.$.vendor
 
-      if (addressType === "ipv4") {
-        newHost.ip = addressAdress;
-      } else if (addressType === "mac") {
-        newHost.mac = addressAdress;
-        newHost.vendor = addressVendor;
+      if (addressType === 'ipv4') {
+        newHost.ip = addressAdress
+      } else if (addressType === 'mac') {
+        newHost.mac = addressAdress
+        newHost.vendor = addressVendor
       }
-    });
+    })
 
     //get ports
     if (host.ports && host.ports[0].port) {
-      const portList = host.ports[0].port;
+      const portList = host.ports[0].port
 
       const openPorts = portList.filter((port) => {
-        return port.state[0].$.state === "open";
-      });
+        return (port.state[0].$.state === 'open')
+      })
 
       newHost.openPorts = openPorts.map((portItem) => {
         // console.log(JSON.stringify(portItem, null, 4))
-        console.log(`portsItem: ${JSON.stringify(portItem)}`)
 
-        const port = parseInt(portItem.$.portid);
-        const protocol = portItem.$.protocol;
-
-        if (portItem.service) {
-          const service = portItem.service[0].$.name;
-          const tunnel = portItem.service[0].$.tunnel;
-          const method = portItem.service[0].$.method;
-          const product = portItem.service[0].$.tunnel;
-        }
-        console.log(`service: ${JSON.stringify(service)}`)
-
-        let portObject = {};
-        if (port) portObject.port = port;
-        if (protocol) portObject.protocol = protocol;
+        const port = parseInt(portItem.$.portid)
+        const protocol = portItem.$.protocol
 
         if (portItem.service) {
-          if (service) portObject.service = service;
-          if (tunnel) portObject.tunnel = tunnel;
-          if (method) portObject.method = method;
-          if (product) portObject.product = product;
+          const service = portItem.service[0].$.name
+          const tunnel = portItem.service[0].$.tunnel
+          const method = portItem.service[0].$.method
+          const product = portItem.service[0].$.tunnel
         }
 
-        return portObject;
-      });
+        let portObject = {}
+        if(port) portObject.port = port
+        if(protocol) portObject.protocol = protocol
+
+        if (portItem.service) {
+          if(service) portObject.service = service
+          if(tunnel) portObject.tunnel = tunnel
+          if(method) portObject.method = method
+          if(product) portObject.product = product
+        }
+
+        return portObject
+      })
     }
 
     if (host.os && host.os[0].osmatch && host.os[0].osmatch[0].$.name) {
-      newHost.osNmap = host.os[0].osmatch[0].$.name;
+      newHost.osNmap = host.os[0].osmatch[0].$.name
     }
-    return newHost;
-  });
+    return newHost
+  })
 
   return tempHostList;
 }
+
 
 class NmapScan extends EventEmitter {
   constructor(range, inputArguments) {
@@ -117,8 +112,8 @@ class NmapScan extends EventEmitter {
     this.nmapoutputXML = "";
     this.timer;
     this.range = [];
-    this.arguments = ["-oX", "-"];
-    this.rawData = "";
+    this.arguments = ['-oX', '-'];
+    this.rawData = '';
     this.rawJSON;
     this.child;
     this.cancelled = false;
@@ -146,7 +141,7 @@ class NmapScan extends EventEmitter {
   commandConstructor(range, additionalArguments) {
     if (additionalArguments) {
       if (!Array.isArray(additionalArguments)) {
-        additionalArguments = additionalArguments.split(" ");
+        additionalArguments = additionalArguments.split(' ');
       }
       this.command = this.arguments.concat(additionalArguments);
     } else {
@@ -154,7 +149,7 @@ class NmapScan extends EventEmitter {
     }
 
     if (!Array.isArray(range)) {
-      range = range.split(" ");
+      range = range.split(' ');
     }
     this.range = range;
     this.command = this.command.concat(this.range);
@@ -164,56 +159,52 @@ class NmapScan extends EventEmitter {
     this.cancelled = true;
     if (this.child) {
       this.child.kill();
+
     }
   }
 
   initializeChildProcess() {
     this.startTimer();
     this.child = spawn(nmap.nmapLocation, this.command);
-    process.on("SIGINT", this.killChild);
-    process.on("uncaughtException", this.killChild);
-    process.on("exit", this.killChild);
+    process.on('SIGINT', this.killChild);
+    process.on('uncaughtException', this.killChild);
+    process.on('exit', this.killChild);
     this.child.stdout.on("data", (data) => {
       if (data.indexOf("percent") > -1) {
         // console.log(data.toString());
       } else {
         this.rawData += data;
       }
+
     });
 
-    this.child.on("error", (err) => {
-      this.emit("error", "child.on(error)");
-
+    this.child.on('error', (err) => {
       //this.killChild();
-      if (err.code === "ENOENT") {
-        this.emit(
-          "error",
-          "NMAP not found at command location: " + nmap.nmapLocation
-        );
+      if (err.code === 'ENOENT') {
+        this.emit('error', 'NMAP not found at command location: ' + nmap.nmapLocation)
       } else {
-        this.emit("error", err.Error);
+        this.emit('error', err.Error)
       }
-    });
+    })
 
     this.child.stderr.on("data", (err) => {
       this.error = err.toString();
     });
 
     this.child.on("close", () => {
-      process.removeListener("SIGINT", this.killChild);
-      process.removeListener("uncaughtException", this.killChild);
-      process.removeListener("exit", this.killChild);
+      process.removeListener('SIGINT', this.killChild);
+      process.removeListener('uncaughtException', this.killChild);
+      process.removeListener('exit', this.killChild);
 
       if (this.error) {
         this.stopTimer();
-        this.emit("error", "child.on(close)");
-        this.emit("error", this.error);
+        this.emit('error', this.error);
       } else if (this.cancelled === true) {
         this.stopTimer();
-        this.emit("error", "Over scan timeout " + this.scanTimeout);
+        this.emit('error', "Over scan timeout " + this.scanTimeout);
       } else {
+        this.rawDataHandler(this.rawData);
       }
-      this.rawDataHandler(this.rawData);
     });
   }
 
@@ -223,13 +214,13 @@ class NmapScan extends EventEmitter {
 
   cancelScan() {
     this.killChild();
-    this.emit("error", "Scan cancelled");
+    this.emit('error', "Scan cancelled");
   }
 
   scanComplete(results) {
     this.scanResults = results;
     this.stopTimer();
-    this.emit("complete", this.scanResults);
+    this.emit('complete', this.scanResults);
   }
 
   rawDataHandler(data) {
@@ -238,17 +229,11 @@ class NmapScan extends EventEmitter {
     xml2js.parseString(data, (err, result) => {
       if (err) {
         this.stopTimer();
-        this.emit("error", "Error converting XML to JSON in xml2js: " + err);
+        this.emit('error', "Error converting XML to JSON in xml2js: " + err);
       } else {
         this.rawJSON = result;
         results = convertRawJsonToScanResults(this.rawJSON, (err) => {
-          this.emit(
-            "error",
-            "Error converting raw json to cleans can results: " +
-              err +
-              ": " +
-              this.rawJSON
-          );
+          this.emit('error', "Error converting raw json to cleans can results: " + err + ": " + this.rawJSON);
         });
         this.scanComplete(results);
       }
@@ -256,18 +241,21 @@ class NmapScan extends EventEmitter {
   }
 }
 
+
 class QuickScan extends NmapScan {
   constructor(range) {
-    super(range, "-sP");
+    super(range, '-sP');
   }
 }
 class OsAndPortScan extends NmapScan {
   constructor(range) {
-    super(range, "-O");
+    super(range, '-O');
   }
 }
 
+
 class QueuedScan extends EventEmitter {
+
   constructor(scanClass, range, args, action = () => {}) {
     super();
     this.scanResults = [];
@@ -279,6 +267,7 @@ class QueuedScan extends EventEmitter {
     this.saveNotFoundToResults = false;
 
     this._queue = new Queue((host) => {
+
       if (args !== null) {
         this.currentScan = new scanClass(host, args);
       } else {
@@ -288,7 +277,7 @@ class QueuedScan extends EventEmitter {
         this.currentScan.scanTimeout = this.singleScanTimeout;
       }
 
-      this.currentScan.on("complete", (data) => {
+      this.currentScan.on('complete', (data) => {
         this.scanTime += this.currentScan.scanTime;
         if (data[0]) {
           data[0].scanTime = this.currentScan.scanTime;
@@ -296,21 +285,23 @@ class QueuedScan extends EventEmitter {
         } else if (this.saveNotFoundToResults) {
           data[0] = {
             error: "Host not found",
-            scanTime: this.currentScan.scanTime,
-          };
+            scanTime: this.currentScan.scanTime
+          }
           this.scanResults = this.scanResults.concat(data);
+
         }
         action(data);
         this._queue.done();
       });
 
-      this.currentScan.on("error", (err) => {
+      this.currentScan.on('error', (err) => {
         this.scanTime += this.currentScan.scanTime;
 
         let data = {
           error: err,
-          scanTime: this.currentScan.scanTime,
-        };
+          scanTime: this.currentScan.scanTime
+        }
+
 
         if (this.saveErrorsToResults) {
           this.scanResults = this.scanResults.concat(data);
@@ -327,22 +318,22 @@ class QueuedScan extends EventEmitter {
 
     this._queue.add(this.rangeFormatter(range));
 
-    this._queue.on("complete", () => {
-      this.emit("complete", this.scanResults);
+    this._queue.on('complete', () => {
+      this.emit('complete', this.scanResults);
+
     });
   }
 
   rangeFormatter(range) {
     let outputRange = [];
     if (!Array.isArray(range)) {
-      range = range.split(" ");
+      range = range.split(' ');
     }
 
     for (let i = 0; i < range.length; i++) {
       let input = range[i];
       let temprange = range[i];
-      if (
-        countCharacterOccurence(input, ".") === 3 &&
+      if (countCharacterOccurence(input, ".") === 3 &&
         input.match(new RegExp("-", "g")) !== null &&
         !input.match(/^[a-zA-Z]+$/) &&
         input.match(new RegExp("-", "g")).length === 1
@@ -420,17 +411,17 @@ class QueuedScan extends EventEmitter {
   }
 
   queue(newQueue) {
+
     if (Array.isArray(newQueue)) {
       return this._queue.queue(newQueue);
+
     } else {
       return this._queue.queue();
     }
   }
 
   percentComplete() {
-    return Math.round(
-      ((this._queue.index() + 1) / this._queue.queue().length) * 100
-    );
+    return Math.round(((this._queue.index() + 1) / this._queue.queue().length) * 100);
   }
 }
 
@@ -460,7 +451,7 @@ let nmap = {
   QueuedScan,
   QueuedNmapScan,
   QueuedQuickScan,
-  QueuedOsAndPortScan,
-};
+  QueuedOsAndPortScan
+}
 
 module.exports = nmap;
