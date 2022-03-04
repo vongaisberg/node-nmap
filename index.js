@@ -73,7 +73,7 @@ function convertRawJsonToScanResults(xmlInput) {
 
       newHost.openPorts = openPorts.map((portItem) => {
         // console.log(JSON.stringify(portItem, null, 4))
-        console.log(JSON.stringify(portItem))
+        console.log(`portsItem: ${JSON.stringify(portItem)}`)
 
         const port = parseInt(portItem.$.portid);
         const protocol = portItem.$.protocol;
@@ -84,6 +84,7 @@ function convertRawJsonToScanResults(xmlInput) {
           const method = portItem.service[0].$.method;
           const product = portItem.service[0].$.tunnel;
         }
+        console.log(`service: ${JSON.stringify(service)}`)
 
         let portObject = {};
         if (port) portObject.port = port;
