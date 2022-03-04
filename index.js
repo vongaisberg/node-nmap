@@ -31,6 +31,7 @@ function convertRawJsonToScanResults(xmlInput) {
   xmlInput = xmlInput.nmaprun.host;
 
   tempHostList = xmlInput.map((host) => {
+    console.log(JSON.stringify(host))
     const newHost = {
       hostname: null,
       ip: null,
